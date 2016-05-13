@@ -13,15 +13,19 @@
      * @version     :	1.0
     */
 
-    function iCalEvent($to_address, $subject, $startdateofevent, $timeofevent, $description, $location)
+    function iCalEvent($to_name, $to_address, $subject, $startdateofevent, $timeofevent, $description, $location)
     {
+        $endtime = strtotime($timeofevent) + 60*60;
+        $endtime = date('H:i', $endtime); 
+        $endtimestamp = date('Y/m/d\THis',strtotime("$endtime $startdateofevent"));
         $timestamp = date('Y/m/d\THis',strtotime("$timeofevent $startdateofevent"));
 
         //Create Email Headers
         $mime_boundary = "----Meeting Booking----".MD5(TIME());
-        $headers .= "MIME-Version: 1.0\n";
-        $headers .= "Content-Type: multipart/alternative; boundary=\"$mime_boundary\"\n";
-        $headers .= "Content-class: urn:content-classes:calendarmessage\n";
+        $header = "";
+        $header .= "MIME-Version: 1.0\n";
+        $header .= "Content-Type: multipart/mixed; boundary=\"$mime_boundary\"\n";
+        $header .= "Content-class: urn:content-classes:calendarmessage\n";
         
         //Create Email Body (HTML)
         $message = "--$mime_boundary\r\n";
@@ -39,13 +43,16 @@
         'VERSION:2.0' . "\r\n" .
         'METHOD:REQUEST' . "\r\n" .
         'BEGIN:VEVENT' . "\r\n" .
-        'ATTENDEE;RSVP=TRUE:MAILTO:'.$to_address. "\r\n" .
-        'UID:'.date("Ymd\TGis", strtotime($timestamp)).rand(). "\r\n" .
+        'ATTENDEE;CN="'.$to_name.'";ROLE=REQ-PARTICIPANT;RSVP=TRUE:MAILTO:'.$to_address. "\r\n" .
+        'UID:'.date("Ymd\TGis", strtotime($timestamp)). "\r\n" .
         'DTSTAMP:'.date("Ymd\TGis"). "\r\n" .
-        'DTSTART;TZID="Eastern Time":'.date("Ymd\THis", strtotime($timestamp)). "\r\n" .
-        'DTEND:'. "\r\n" .
+        'DTSTART;TZID="US-Eastern":'.date("Ymd\THis", strtotime($timestamp)). "\r\n" .
+        'DTEND;TZID="US-Eastern":'.date("Ymd\THis", strtotime($endtimestamp)). "\r\n" .
+        'TRANSP:OPAQUE'. "\r\n" .
+        'SEQUENCE:1'. "\r\n" .        
         'SUMMARY:' . $subject . "\r\n" .
         'LOCATION:' . $location . "\r\n" .
+        'CLASS:PUBLIC'. "\r\n" .        
         'PRIORITY:5'. "\r\n" .
         'BEGIN:VALARM' . "\r\n" .
         'TRIGGER:-PT15M' . "\r\n" .
@@ -58,7 +65,7 @@
         $message .= "Content-Transfer-Encoding: 8bit\n\n";
         $message .= $ical;
 
-        $mailsent = mail($to_address, $subject, $message, $headers);
+        $mailsent = mail($to_address, $subject, $message, $header);
     }
 
 
@@ -67,14 +74,15 @@
 
     	Sample date for testing the function.
 
-    */       
-    $to_address         = "JohnMark@example.com";       // Sender Email address.
+    */
+    $to_name            = "Pradeep";
+    $to_address         = "pradeepveera1989@gmail.com";       // Sender Email address.
     $startdateofevent   = "November 22nd 2016";         // Date of the Event.
     $timeofevent        = "10 AM";                      // Time of the Event.
     $subject            = "5K FUN RUN/WALK";            // Subject of the event   
-    $description        = "The run will begin at 9:00 A.M. Participants must be registered by this point. We are expecting to have around 100 participants. We will have sent registration applications out prior to the event, to smaller running clubs in the area. Registration fees are $20. The fees are to help cover park permit fees, park participant fees, parking fees, and refreshments. If a participant has registered early they will have a parking pass distributed by us and the East Bay Regional Parks will be reimbursed by the end of the event. If a participant has not registered early they will not have a parking pass and will have to pay for parking on their own.
-    ";        // Disciption of the Event
+    $description        = "The run will begin at 9:00 A.M. Participants must be registered by this point.";        // Disciption of the Event
     $location = "Macdonald Trail, Redwood Regional Park and Anthony Chabot Regional Park";       // Location of the Event
 
     // Function call 
-     iCalEvent($to_address, $subject, $startdateofevent, $timeofevent , $description, $location);
+     iCalEvent($to_name, $to_address, $subject, $startdateofevent, $timeofevent , $description, $location);
+    ?>
